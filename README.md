@@ -1,9 +1,13 @@
-# Servidor para a Aplicação Minhas Séries - DevPleno
+# Servidor para a aplicação Minhas Séries
 
-Criado durante o evento Hands-on ReactJS do DevPleno.
+### Usage
 
-https://www.devpleno.com/handsonreact/
+Just run the following command:
 
-https://www.devpleno.com/devreactjs/
+```
+npm start
+```
 
-https://www.devpleno.com/
+That's all!
+
+Forked from [tuliofaria/minhas-series-server](https://github.com/tuliofaria/minhas-series-server)

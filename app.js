@@ -1,21 +1,22 @@
-const express = require('express')
-const app = express()
-const path = require('path')
+const express = require('express');
+const bodyParser = require('body-parser');
+const router = require('./router');
 
-const bodyParser = require('body-parser')
-app.use(bodyParser.json({ extended: true }))
+const app = express();
 
-const routes = require('./routes')
-app.use(routes)
+app.use(bodyParser.json({ extended: true }));
+app.use('/api', router);
 
 if (process.env.NODE_ENV === 'production') {
-  const baseDir = process.env.BASE_DIR || './' // /usr/src/app/
+  const baseDir = process.env.BASE_DIR || './';
+
   // Serve any static files
-  app.use(express.static(baseDir + 'build'))
+  app.use(express.static(baseDir + 'build'));
+
   // Handle React routing, return all requests to React app
   app.get('*', function (req, res) {
-    res.sendFile(baseDir + 'build/index.html')
-  })
+    res.sendFile(baseDir + 'build/index.html');
+  });
 }
 
-module.exports = app
+module.exports = app;
