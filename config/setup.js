@@ -48,5 +48,7 @@ const initDB = async () => {
   }
 }
 
-createDB();
-initDB();
+(async () => {
+  await createDB();
+  await initDB();
+})();
