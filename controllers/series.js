@@ -1,25 +1,10 @@
-const axios = require('axios');
-const apiKey = '54bc8a90b9ec3f31addef0c092d7c22e';
-
-const getSerieImage = async (name) => {
-  try {
-    const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&language=pt-BR&query=${name}&page=1&include_adult=false`;
-    const res = await axios.get(url);
-    return {
-      poster: `//image.tmdb.org/t/p/original${res.data.results[0].poster_path}`,
-      background: `//image.tmdb.org/t/p/original${res.data.results[0].backdrop_path}`
-    };
-  } catch (err) {
-    return { poster: '', background: '' };
-  }
-}
+const getSeriePosterAndBackground = require('../utils/themoviedb');
 
 const get = ({ db }) => async (req, res) => {
   const series = await db
     .select({
       id: 'series.id',
       name: 'series.name',
-      status: 'series.status',
       genre: 'genres.name',
       poster: 'series.poster',
       background: 'series.background'
@@ -27,12 +12,7 @@ const get = ({ db }) => async (req, res) => {
     .from('series')
     .leftJoin('genres', 'genres.id', 'series.genre_id');
 
-  res.send({
-    data: series,
-    pagination: {
-      message: 'soon :)'
-    }
-  });
+  res.send({ data: series });
 }
 
 const getOne = ({ db }) => async (req, res) => {
@@ -42,10 +22,8 @@ const getOne = ({ db }) => async (req, res) => {
     .select({
       id: 'series.id',
       name: 'series.name',
-      status: 'series.status',
+      genre_id: 'genres.id',
       genre: 'genres.name',
-      genre_id: 'series.genre_id',
-      comments: 'series.comments',
       poster: 'series.poster',
       background: 'series.background'
     })
@@ -57,41 +35,49 @@ const getOne = ({ db }) => async (req, res) => {
 }
 
 const create = ({ db }) => async (req, res) => {
-  const newSerie = req.body;
-  const images = await getSerieImage(newSerie.name);
+  const { name, genre_id } = req.body;
+
+  const genre = db('genres').select().where('id', genre_id).first();
+  const serie = db('series').select().where('name', name).first();
+
+  if (await genre === undefined) {
+    return res.status(404).send({ error: true });
+  }
+
+  if (await serie !== undefined) {
+    return res.status(400).send({ error: true });
+  }
+
+  const images = await getSeriePosterAndBackground(name);
 
   const serieToInsert = {
-    name: newSerie.name,
-    status: newSerie.status,
-    genre_id: newSerie.genre_id,
-    comments: newSerie.comments,
+    name: name,
+    genre_id: genre_id,
     poster: images.poster,
     background: images.background
   };
 
   const [insertedId] = await db.insert(serieToInsert).into('series');
   serieToInsert.id = insertedId;
+
   res.send(serieToInsert);
 }
 
 const update = ({ db }) => async (req, res) => {
   const { id } = req.params;
-  const updatedSerie = req.body;
+  const { name, genre_id } = req.body;
 
-  const serie = await db('series').select().where('id', id);
+  const serie = await db('series').select().where('id', id).first();
 
-  if (serie.length === 0) {
-    res.status(401);
-    return res.send({ error: true });
+  if (serie === undefined) {
+    return res.status(404).send({ error: true });
   }
 
-  const images = await getSerieImage(updatedSerie.name);
+  const images = await getSeriePosterAndBackground(name);
 
   const serieToUpdate = {
-    name: updatedSerie.name,
-    status: updatedSerie.status,
-    genre_id: updatedSerie.genre_id,
-    comments: updatedSerie.comments,
+    name: name,
+    genre_id: genre_id,
     poster: images.poster,
     background: images.background
   };
@@ -102,15 +88,15 @@ const update = ({ db }) => async (req, res) => {
 
 const remove = ({ db }) => async (req, res) => {
   const { id } = req.params;
-  const serie = await db('series').select().where('id', id);
 
-  if (serie.length === 0) {
-    res.status(401);
-    res.send({ error: true });
-  } else {
-    await db('series').select().where('id', id).del();
-    res.send({ success: true });
+  const serie = await db('series').select().where('id', id).first();
+
+  if (serie === undefined) {
+    return res.status(404).send({ error: true });
   }
+
+  await db('series').select().where('id', id).del();
+  res.send({ success: true });
 }
 
 module.exports = { get, getOne, create, update, remove };
