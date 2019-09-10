@@ -21,28 +21,32 @@ const login = ({ db }) => async (req, res) => {
 const signup = ({ db }) => async (req, res) => {
   const { name, email } = req.body;
 
-  const userExists = db('users').select().where('email', email).first();
+  const userExists = await db('users').select().where('email', email).first();
 
-  if (await userExists !== undefined) {
+  if (userExists !== undefined) {
     return res.status(400).send({ error: true });
   }
 
   const userToInsert = {
-    name,
-    email
+    name: name || null,
+    email: email || null
   };
 
-  const [insertedUserId] = await db.insert(userToInsert).into('users');
-  userToInsert.id = insertedUserId;
+  let result = {};
 
-  const [insertedListId] = await db.insert({ user_id: insertedUserId }).into('lists');
-  userToInsert.list_id = insertedListId;
+  try {
+    const [insertedUserId] = await db.insert(userToInsert).into('users');
+    userToInsert.id = insertedUserId;
 
-  res.send(userToInsert);
+    const [insertedListId] = await db.insert({ user_id: insertedUserId }).into('lists');
+    userToInsert.list_id = insertedListId;
+
+    result = { status: 201, response: userToInsert };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
-const update = ({ db }) => async (req, res) => {}
-
-const remove = ({ db }) => async (req, res) => {}
-
-module.exports = { login, signup, update, remove };
+module.exports = { login, signup };

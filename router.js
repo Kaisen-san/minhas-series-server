@@ -8,7 +8,7 @@ router.get('/', (req, res) =>
   res.send({ info: 'Minhas Séries Server', datetime: new Date() })
 );
 
-router.use('/users', users);
+router.use(users);
 router.use('/series', series);
 router.use('/genres', genres);
 router.use('/serieslists', seriesLists);

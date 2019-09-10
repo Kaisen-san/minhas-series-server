@@ -18,6 +18,6 @@
     "dev": "nodemon server.js"
   },
   "keywords": [],
-  "author": "Tulio Faria",
+  "author": "Felipe Andrade",
   "license": "MIT"
 }

@@ -51,16 +51,23 @@ const create = ({ db }) => async (req, res) => {
   const images = await getSeriePosterAndBackground(name);
 
   const serieToInsert = {
-    name: name,
+    name: name || null,
     genre_id: genre_id,
     poster: images.poster,
     background: images.background
   };
 
-  const [insertedId] = await db.insert(serieToInsert).into('series');
-  serieToInsert.id = insertedId;
+  let result = {};
 
-  res.send(serieToInsert);
+  try {
+    const [insertedId] = await db.insert(serieToInsert).into('series');
+    serieToInsert.id = insertedId;
+    result = { status: 201, response: serieToInsert };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
 const update = ({ db }) => async (req, res) => {
@@ -76,14 +83,21 @@ const update = ({ db }) => async (req, res) => {
   const images = await getSeriePosterAndBackground(name);
 
   const serieToUpdate = {
-    name: name,
+    name: name || null,
     genre_id: genre_id,
     poster: images.poster,
     background: images.background
   };
+  let result = {};
 
-  await db('series').where('id', id).update(serieToUpdate);
-  res.send(serieToUpdate);
+  try {
+    await db('series').where('id', id).update(serieToUpdate);
+    result = { status: 200, response: serieToUpdate };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
 const remove = ({ db }) => async (req, res) => {
@@ -95,8 +109,16 @@ const remove = ({ db }) => async (req, res) => {
     return res.status(404).send({ error: true });
   }
 
-  await db('series').select().where('id', id).del();
-  res.send({ success: true });
+  let result = {};
+
+  try {
+    await db('series').select().where('id', id).del();
+    result = { status: 200, response: { success: true } };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
 module.exports = { get, getOne, create, update, remove };

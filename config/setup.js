@@ -7,6 +7,8 @@ const createDB = async () => {
   const seriesExist = db.schema.hasTable('series');
   const seriesListsExist = db.schema.hasTable('seriesLists');
 
+  await db.raw('PRAGMA foreign_keys = ON;');
+
   if (!await usersExist) {
     await db.schema.createTable('users', table => {
       table.increments('id').primary();
@@ -18,6 +20,7 @@ const createDB = async () => {
   if (!await listsExist) {
     await db.schema.createTable('lists', table => {
       table.increments('id').primary();
+      table.string('name').defaultTo('Minha Lista');
       table.integer('user_id').unique().references('id').inTable('users').onDelete('CASCADE');
     });
   }
@@ -42,7 +45,7 @@ const createDB = async () => {
   if (!await seriesListsExist) {
     await db.schema.createTable('seriesLists', table => {
       table.integer('list_id').references('id').inTable('lists').onDelete('CASCADE');
-      table.integer('serie_id').references('id').inTable('series').onDelete('CASCADE');
+      table.integer('serie_id').references('id').inTable('series').onDelete('RESTRICT');
       table.enum('status', ['PENDING', 'WATCHED']).defaultTo('PENDING');
       table.string('comments').defaultTo('');
       table.primary(['list_id', 'serie_id']);
@@ -89,8 +92,8 @@ const initDB = async () => {
 
     await db.insert({
       name: 'Rick and Morty',
-      poster: '//image.tmdb.org/t/p/original/yVUAfbrP5HDJugXraB7KQS0yz6Z.jpg',
-      background: '//image.tmdb.org/t/p/original/piuRhGiQBYWgW668eSNJ2ug5uAO.jpg',
+      poster: '//image.tmdb.org/t/p/original/771XSdOiuWDYiE2nDPxmOZyHbrh.jpg',
+      background: '//image.tmdb.org/t/p/original/mzzHr6g1yvZ05Mc7hNj3tUdy2bM.jpg',
       genre_id: 2
     }).into('series');
 

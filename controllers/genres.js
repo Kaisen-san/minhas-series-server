@@ -19,14 +19,28 @@ const getOne = ({ db }) => async (req, res) => {
 
 const create = ({ db }) => async (req, res) => {
   const { name } = req.body;
+
+  const genre = db('genres').select().where('name', name).first();
+
+  if (await genre !== undefined) {
+    return res.status(400).send({ error: true });
+  }
+
   const genreToInsert = {
-    name
+    name: name || null
   };
 
-  const [insertedId] = await db.insert(genreToInsert).into('genres');
-  genreToInsert.id = insertedId;
+  let result = {};
 
-  res.send(genreToInsert);
+  try {
+    const [insertedId] = await db.insert(genreToInsert).into('genres');
+    genreToInsert.id = insertedId;
+    result = { status: 201, response: genreToInsert };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
 const update = ({ db }) => async (req, res) => {
@@ -40,11 +54,19 @@ const update = ({ db }) => async (req, res) => {
   }
 
   const genreToUpdate = {
-    name
+    name: name || null
   };
 
-  await db('genres').where('id', id).update(genreToUpdate);
-  res.send(genreToUpdate);
+  let result = {};
+
+  try {
+    await db('genres').where('id', id).update(genreToUpdate);
+    result = { status: 200, response: genreToUpdate };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
 const remove = ({ db }) => async (req, res) => {
@@ -55,8 +77,16 @@ const remove = ({ db }) => async (req, res) => {
     return res.status(404).send({ error: true });
   }
 
-  await db('genres').select().where('id', id).del();
-  res.send({ success: true });
+  let result = {};
+
+  try {
+    await db('genres').select().where('id', id).del();
+    result = { status: 200, response: { success: true } };
+  } catch (ex) {
+    result = { status: 400, response: { error: true } };
+  } finally {
+    res.status(result.status).send(result.response);
+  }
 }
 
 module.exports = { get, getOne, create, update, remove };
