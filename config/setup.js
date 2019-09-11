@@ -99,13 +99,13 @@ const initDB = async () => {
 
     await db.insert({
       list_id: 1,
-      serie_id: 1,
-      status: 'WATCHED'
+      serie_id: 1
     }).into('seriesLists');
-
+  
     await db.insert({
       list_id: 1,
-      serie_id: 2
+      serie_id: 2,
+      status: 'WATCHED'
     }).into('seriesLists');
 
     await db.insert({
